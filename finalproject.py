@@ -9,7 +9,13 @@ class Deck:
         self.cards = [] 
 
     def add_cards(self, card):
-        self.cards.append(card)
+        self.cards.append(card) 
 
+
+
+    def save_library(self, filename):
+        with open(filename, 'w') as file:
+            for card in self.cards:
+                file.write
 
 
