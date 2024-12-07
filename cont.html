@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CardsForStudy</title>
+    <style>
+        :root {
+            --dark-purple: #2D2A47;
+            --nav-blue: #464B7D;
+            --light-blue: #6B72B6;
+            --white: #FFFFFF;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--dark-purple);
+        }
+
+        nav {
+            background-color: var(--nav-blue);
+            padding: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .nav-left, .nav-right {
+            display: flex;
+            gap: 2rem;
+            font-family: Arial, Helvetica, sans-serif;
+            font-weight: bolder;
+            font-size: 1.4rem;
+            margin-left: 80px;
+        }
+
+        .nav-right {
+            display: flex;
+            gap: 2rem;
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 1.4rem;
+            margin-right: 100px;  
+        }
+
+        .nav-center {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: var(--white);
+            font-family: Arial, Helvetica, sans-serif;
+        }
+
+        nav a {
+            color: var(--white);
+            text-decoration: none;
+            opacity: 0.8;
+        }
+
+        .container {
+            display: flex;
+            padding: 2rem;
+            gap: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .decks-panel {
+            flex: 1;
+            background-color: var(--light-blue);
+            padding: 1.5rem;
+            border-radius: 1rem;
+        }
+
+        .decks-header {
+            color: var(--white);
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            font-family: Arial, Helvetica, sans-serif;
+            font-weight: bold;
+            text-align: center;
+
+        }
+
+        .deck-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .deck-input-group {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            position: relative;
+        }
+
+        .deck-input {
+            flex: 1;
+            padding: 0.8rem;
+            border: none;
+            border-radius: 0.5rem;
+            background-color: var(--nav-blue);
+            color: var(--white);
+            outline: none;
+        }
+
+        .deck-input::placeholder {
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .deck-input:focus {
+            box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.3);
+        }
+
+        .create-new {
+            margin-top: 1rem;
+            background-color: var(--nav-blue);
+            color: var(--white);
+            border: none;
+            padding: 0.8rem 1.5rem;
+            border-radius: 2rem;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            margin-left: 50px;
+            font-family: Arial, Helvetica, sans-serif;
+            font-weight: bold;
+        }
+
+        .create-new:hover {
+            background-color: #555d99;
+        }
+
+        .submit-button {
+            margin-top: 1rem;
+            background-color: white;
+            color: var(--nav-blue);
+            border: none;
+            padding: 0.8rem 1.5rem;
+            border-radius: 2rem;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            margin-left: 45px;
+            font-weight: bold;
+            font-family: Arial;
+        }
+
+        .submit-button:hover {
+            background-color: #555d99;
+            color: white;
+        }
+
+        .delete-btn {
+            position: absolute;
+            right: -40px;
+            top: 50%;
+            transform: translateY(-50%);
+            background-color: #31245f;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        .delete-btn:hover {
+            background-color: #070d6342;
+        }
+
+       
+        .user-panel {
+            flex: 2;
+            background-color: var(--light-blue);
+            padding: 1.5rem;
+            border-radius: 1rem;
+        }
+
+        .user-card {
+            background-color: var(--white);
+            border-radius: 1rem;
+            padding: 2rem;
+            text-align: center;
+            font-family: Arial, Helvetica, sans-serif;
+        }
+
+        .user-avatar {
+            width: 80px;
+            height: 80px;
+            background-color: var(--dark-purple);
+            border-radius: 50%;
+            margin: 0 auto 1rem;
+        }
+
+        .progress-bar {
+            background-color: #ccc;
+            height: 1rem;
+            border-radius: 0.5rem;
+            margin: 1rem 0;
+        }
+
+        .progress {
+            background-color: var(--nav-blue);
+            width: 30%;
+            height: 100%;
+            border-radius: 0.5rem;
+            transition: width 0.3s ease;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+            }
+
+            .nav-left, .nav-right {
+                gap: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="nav-left">
+            <a href="/main">Home</a>
+            <a href="/about">About</a>
+        </div>
+        <div class="nav-center">CardsForStudy</div>
+        <div class="nav-right">
+            <a>Streaks</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="decks-panel">
+            <div class="decks-header">Flashcards for Deck 1</div>
+            <div class="deck-list">
+                <div class="deck-input-group">
+                    <input type="text" class="deck-input" placeholder="Term">
+                    <input type="text" class="deck-input" placeholder="Definition">
+                    <button class="delete-btn" onclick="deleteInputGroup(this)">×</button>
+                </div>
+                <div class="deck-input-group">
+                    <input type="text" class="deck-input" placeholder="Term">
+                    <input type="text" class="deck-input" placeholder="Definition">
+                    <button class="delete-btn" onclick="deleteInputGroup(this)">×</button>
+                </div>
+                <div class="deck-input-group">
+                    <input type="text" class="deck-input" placeholder="Term">
+                    <input type="text" class="deck-input" placeholder="Definition">
+                    <button class="delete-btn" onclick="deleteInputGroup(this)">×</button>
+                </div>
+                <div class="deck-input-group">
+                    <input type="text" class="deck-input" placeholder="Term">
+                    <input type="text" class="deck-input" placeholder="Definition">
+                    <button class="delete-btn" onclick="deleteInputGroup(this)">×</button>
+                </div>
+            </div>
+            <button class="create-new" onclick="addNewInputGroup()">Create new +</button>
+            <button class="submit-button" onclick="saveFlashcards()">Submit</button>
+        </div>
+
+        <div class="user-panel">
+            <div class="user-card">
+                <div class="user-avatar"></div>
+                <h2>Track your progress</h2>
+                <div class="progress-bar">
+                    <div class="progress"></div>
+                </div>
+                <span>Next level</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function addNewInputGroup() {
+            const deckList = document.querySelector('.deck-list');
+            const newInputGroup = document.createElement('div');
+            newInputGroup.className = 'deck-input-group';
+            newInputGroup.innerHTML = `
+                <input type="text" class="deck-input" placeholder="Term">
+                <input type="text" class="deck-input" placeholder="Definition">
+                <button class="delete-btn" onclick="deleteInputGroup(this)">×</button>
+            `;
+            deckList.appendChild(newInputGroup);
+        }
+
+        function deleteInputGroup(button) {
+            const inputGroup = button.parentElement;
+            inputGroup.style.opacity = '0';
+            inputGroup.style.transition = 'opacity 0.3s ease';
+            
+            setTimeout(() => {
+                inputGroup.remove();
+            }, 300);
+        }
+
+        function saveFlashcards() {
+            const inputGroups = document.querySelectorAll('.deck-input-group');
+            const flashcards = [];
+            let hasEmptyFields = false;
+
+            inputGroups.forEach(group => {
+                const inputs = group.querySelectorAll('.deck-input');
+                const term = inputs[0].value.trim();
+                const definition = inputs[1].value.trim();
+
+                if (!term || !definition) {
+                    hasEmptyFields = true;
+                    if (!term) inputs[0].style.border = '2px solid red';
+                    if (!definition) inputs[1].style.border = '2px solid red';
+                } else {
+                    inputs[0].style.border = 'none';
+                    inputs[1].style.border = 'none';
+                    
+                    flashcards.push({
+                        term: term,
+                        definition: definition
+                    });
+                }
+            });
+
+            if (hasEmptyFields) {
+                alert('Please fill in all fields before submitting.');
+                return;
+            }
+
+            const deck = {
+                name: "Flashcard Set - " + new Date().toLocaleDateString(),
+                created: new Date().toISOString(),
+                cards: flashcards
+            };
+
+            saveToLocalStorage(deck);
+            const fetchWithVerification = async (url, data, verificationToken) => {
+            try {
+                const response = await fetch(url, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${verificationToken}`, // Token for cross-verification
+                },
+                body: JSON.stringify(data),
+                });
+            
+                if (!response.ok) {
+                throw new Error(`Request failed with status: ${response.status}`);
+                }
+            
+                const result = await response.json();
+                console.log("Response:", result);
+                return result;
+            } catch (error) {
+                console.error("Error:", error);
+            }
+            };
+            
+            // Usage example
+            const url = "/add_card";
+            const verificationToken = "your-secure-token-or-key"; // Generate or fetch this securely
+            
+            fetchWithVerification(url, deck, verificationToken);
+            console.log('sent')
+            // downloadAsJson(deck);
+            clearInputs();
+            alert('Flashcards saved successfully!');
+        }
+
+        function saveToLocalStorage(deck) {
+            const existingDecks = JSON.parse(localStorage.getItem('flashcardDecks') || '[]');
+            existingDecks.push(deck);
+            localStorage.setItem('flashcardDecks', JSON.stringify(existingDecks));
+        }
+
+        function downloadAsJson(deck) {
+            const dataStr = JSON.stringify(deck, null, 2);
+            const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+            
+            const downloadLink = document.createElement('a');
+            downloadLink.setAttribute('href', dataUri);
+            downloadLink.setAttribute('download', 'flashcards.json');
+            downloadLink.click();
+        }
+
+        function clearInputs() {
+            const inputs = document.querySelectorAll('.deck-input');
+            inputs.forEach(input => {
+                input.value = '';
+                input.style.border = 'none';
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const savedDecks = JSON.parse(localStorage.getItem('flashcardDecks') || '[]');
+            console.log('Loaded saved decks:', savedDecks);
+        });
+    </script>
+</body>
+</html>
+
+
