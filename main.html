@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CardsForStudy</title>
+    <style>
+        :root {
+            --dark-purple: #2D2A47;
+            --nav-blue: #464B7D;
+            --light-blue: #6B72B6;
+            --white: #FFFFFF;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--dark-purple);
+        }
+
+        nav {
+            background-color: var(--nav-blue);
+            padding: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .nav-left, .nav-right {
+            display: flex;
+            gap: 2rem;
+            font-family: Arial, Helvetica, sans-serif;
+            font-weight: bolder;
+            font-size: 1.4rem;
+            margin-left: 80px;
+        }
+
+        .nav-right {
+            margin-right: 100px;  
+        }
+
+        .nav-center {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: var(--white);
+            font-family: Arial, Helvetica, sans-serif;
+        }
+
+        nav a {
+            color: var(--white);
+            text-decoration: none;
+            opacity: 0.8;
+        }
+
+        .container {
+            display: flex;
+            padding: 2rem;
+            gap: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .decks-panel {
+            flex: 1;
+            background-color: var(--light-blue);
+            padding: 1.5rem;
+            border-radius: 1rem;
+        }
+
+        .decks-header {
+            color: var(--white);
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            font-family: Arial, Helvetica, sans-serif;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .deck-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+
+        .deck-button-container {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .deck-button {
+            flex: 1;
+            background-color: var(--nav-blue);
+            color: var(--white);
+            border: none;
+            padding: 0.8rem;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            text-align: left;
+            font-family: Arial, Helvetica, sans-serif;
+            text-align: center;
+            font-weight: bold;
+            font-size: 15px;
+            text-decoration: none;
+        }
+
+        .deck-button:hover {
+            background-color: #555d99;
+        }
+
+        .delete-deck-btn {
+            background-color: #31245f;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        .delete-deck-btn:hover {
+            background-color: #070d6342;
+        }
+
+        .create-new {
+            margin-top: 1rem;
+            background-color: var(--white);
+            color: var(--nav-blue);
+            border: none;
+            padding: 0.8rem 1.5rem;
+            border-radius: 2rem;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            margin-left: 90px;
+            font-family: Arial, Helvetica, sans-serif;
+            font-weight: bold;
+
+        }
+
+        .create-new:hover {
+            background-color: #555d99;
+        }
+
+        .user-panel {
+            flex: 2;
+            background-color: var(--light-blue);
+            padding: 1.5rem;
+            border-radius: 1rem;
+        }
+
+        .user-card {
+            background-color: var(--white);
+            border-radius: 1rem;
+            padding: 2rem;
+            text-align: center;
+            font-family: Arial, Helvetica, sans-serif;
+        }
+
+        .user-avatar {
+            width: 80px;
+            height: 80px;
+            background-color: var(--dark-purple);
+            border-radius: 50%;
+            margin: 0 auto 1rem;
+        }
+
+        .progress-bar {
+            background-color: #ccc;
+            height: 1rem;
+            border-radius: 0.5rem;
+            margin: 1rem 0;
+        }
+
+        .progress {
+            background-color: var(--nav-blue);
+            width: 30%;
+            height: 100%;
+            border-radius: 0.5rem;
+            transition: width 0.3s ease;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+            }
+
+            .nav-left, .nav-right {
+                gap: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="nav-left">
+            <a href="/">Home</a>
+            <a href="/about">About</a>
+        </div>
+        <div class="nav-center">CardsForStudy</div>
+        <div class="nav-right">
+            <a href="#">Streaks</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="decks-panel">
+            <div class="decks-header">Your Decks</div>
+            <div class="deck-buttons">
+                <div class="deck-button-container">
+                    <a href="/cont" class="deck-button">Deck 1</a>
+                    <button class="delete-deck-btn" onclick="deleteDeck(this)">×</button>
+                </div>
+            </div>
+            <button class="create-new" onclick="addNewDeck()">Create new +</button>
+        </div>
+
+        <div class="user-panel">
+            <div class="user-card">
+                <div class="user-avatar"></div>
+                <h2>Track your progress</h2>
+                <div class="progress-bar">
+                    <div class="progress"></div>
+                </div>
+                <span>Next level</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let deckCounter = 2; 
+
+        function addNewDeck() {
+            const deckButtons = document.querySelector('.deck-buttons');
+            const newDeckContainer = document.createElement('div');
+            newDeckContainer.className = 'deck-button-container';
+    
+            newDeckContainer.innerHTML = `
+                <a href="/cont" class="deck-button">Deck ${deckCounter}</a>
+                <button class="delete-deck-btn" onclick="deleteDeck(this)">×</button>
+            `;
+    
+            deckButtons.appendChild(newDeckContainer);
+            deckCounter++;
+        }
+
+        function deleteDeck(button) {
+            const deckContainer = button.parentElement;
+            deckContainer.style.opacity = '0';
+            deckContainer.style.transition = 'opacity 0.3s ease';
+    
+            setTimeout(() => {
+                deckContainer.remove();
+            }, 300);
+        }
+
+        function openDeck(deckNumber) {
+            alert(`Opening Deck ${deckNumber}`);
+            
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+        
+        });
+    </script>
+</body>
+</html>
