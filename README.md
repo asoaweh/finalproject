@@ -18,7 +18,6 @@ Frontend:
 - HTML
 - CSS (for styling)
 - JavaScript (for interactivity)
-- AJAX/Fetch API (for interacting with the backend)
 
 Backend:
 - Python
