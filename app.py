@@ -105,8 +105,8 @@ def check_answer():
     
     return jsonify({'correct': is_correct})
 
-@app.route('/matching_quiz/<filename>')
-def matching_quiz(filename):
+@app.route('/quizthree/<filename>')
+def quizthree(filename):
     try:
         cards = load_cards_from_csv(filename)
         if not cards:
@@ -117,37 +117,40 @@ def matching_quiz(filename):
             wrong_definitions = [c.definition for c in cards if c.term != card.term]
             definitions = [card.definition] + random.sample(wrong_definitions, 3)
             random.shuffle(definitions)
-
-        questions.append({
+            
+            questions.append({
                 'term': card.term,
                 'definitions': definitions,
                 'correct_answer': card.definition
             })
         
         random.shuffle(questions)
-        return render_template('matching_quiz.html', questions=questions)
+        return render_template('quizthree.html', questions=questions)
     except FileNotFoundError:
         return jsonify({"error": "Deck not found"}), 404
-    
+
 @app.route('/check_matching_answer', methods=['POST'])
 def check_matching_answer():
     data = request.get_json()
     user_answers = data['answers']
+    filename = data['filename']
     score = 0
-    
+
+    cards = load_cards_from_csv(filename)
+    if not cards:
+        return jsonify({"error": "Deck not found"}), 404
+
     for term, user_answer in user_answers.items():
         correct_answer = None
-        for card in load_cards_from_csv(data['filename']):
+        for card in cards:
             if card.term == term:
                 correct_answer = card.definition
                 break
-        
+
         if user_answer == correct_answer:
             score += 1
-    
+
     return jsonify({"score": score})
-
-
 
 if __name__ == '__main__':
     app.run(debug=True)
