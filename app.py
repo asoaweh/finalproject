@@ -105,6 +105,49 @@ def check_answer():
     
     return jsonify({'correct': is_correct})
 
+@app.route('/matching_quiz/<filename>')
+def matching_quiz(filename):
+    try:
+        cards = load_cards_from_csv(filename)
+        if not cards:
+            return jsonify({"error": "No cards found in the deck"}), 400
+        
+        questions = []
+        for card in cards:
+            wrong_definitions = [c.definition for c in cards if c.term != card.term]
+            definitions = [card.definition] + random.sample(wrong_definitions, 3)
+            random.shuffle(definitions)
+
+        questions.append({
+                'term': card.term,
+                'definitions': definitions,
+                'correct_answer': card.definition
+            })
+        
+        random.shuffle(questions)
+        return render_template('matching_quiz.html', questions=questions)
+    except FileNotFoundError:
+        return jsonify({"error": "Deck not found"}), 404
+    
+@app.route('/check_matching_answer', methods=['POST'])
+def check_matching_answer():
+    data = request.get_json()
+    user_answers = data['answers']
+    score = 0
+    
+    for term, user_answer in user_answers.items():
+        correct_answer = None
+        for card in load_cards_from_csv(data['filename']):
+            if card.term == term:
+                correct_answer = card.definition
+                break
+        
+        if user_answer == correct_answer:
+            score += 1
+    
+    return jsonify({"score": score})
+
+
 
 if __name__ == '__main__':
     app.run(debug=True)
