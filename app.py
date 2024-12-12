@@ -1,8 +1,9 @@
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, session
 import csv
 import random 
 
 app = Flask(__name__)
+app.secret_key = 'your_secret_key'
 class Card: 
     def __init__(self, term, definition): 
         self.term = term
@@ -105,6 +106,69 @@ def check_answer():
     
     return jsonify({'correct': is_correct})
 
+if __name__ == '__main__':
+    app.run(debug=True)
+
+@app.route('/quiztwo/<filename>', methods=['GET', 'POST'])
+def quiztwo(filename):
+    try:
+        cards = load_cards_from_csv(filename)
+        if not cards:
+            return jsonify({"error": "No cards found in the deck"}), 400
+
+        if 'question_index' not in session:
+            session['question_index'] = 0
+            session['score'] = 0
+            session['user_answers'] = {}
+
+        questions = [{'term': card['term'], 'definition': card['definition']} for card in cards]
+
+        current_question = questions[session['question_index']]
+
+        return render_template('quiztwo.html', questions=questions, filename=filename)
+
+    except FileNotFoundError:
+        return jsonify({"error": "Deck not found"}), 404
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/submit_answer', methods=['POST'])
+def submit_answer():
+    data = request.get_json()
+    
+    if not data or 'user_answer' not in data or 'term' not in data:
+        return jsonify({"error": "Missing data"}), 400
+
+    user_answer = data['user_answer']
+    term = data['term']
+    
+    cards = load_cards_from_csv(data['filename'])
+    if not cards:
+        return jsonify({"error": "Deck not found"}), 404
+    
+    correct_answer = None
+    for card in cards:
+        if card['term'] == term:
+            correct_answer = card['definition']
+            break
+    
+    if user_answer.strip().lower() == correct_answer.strip().lower():
+        session['score'] += 1
+        session['question_index'] += 1
+        return jsonify({"correct": True, "score": session['score'], "next_question": True})
+    else:
+        return jsonify({"correct": False, "score": session['score'], "next_question": False})
+
+@app.route('/check_progress', methods=['GET'])
+def check_progress():
+    question_index = session.get('question_index', 0)
+    if question_index >= len(load_cards_from_csv('your_filename.csv')): 
+        return jsonify({"quiz_complete": True, "score": session.get('score', 0)})
+    return jsonify({"quiz_complete": False})
+
+if __name__ == '__main__':
+    app.run(debug=True)
+
 @app.route('/quizthree/<filename>')
 def quizthree(filename):
     try:
@@ -113,25 +177,39 @@ def quizthree(filename):
             return jsonify({"error": "No cards found in the deck"}), 400
         
         questions = []
+        
         for card in cards:
             wrong_definitions = [c.definition for c in cards if c.term != card.term]
-            definitions = [card.definition] + random.sample(wrong_definitions, 3)
-            random.shuffle(definitions)
+            
+            if len(wrong_definitions) >= 3:
+                definitions = random.sample(wrong_definitions, 3)
+                definitions.insert(random.randint(0, 3), card.definition)
+            else:
+                definitions = [card.definition] + wrong_definitions
+                random.shuffle(definitions)
             
             questions.append({
                 'term': card.term,
-                'definitions': definitions,
+                'options': definitions,
                 'correct_answer': card.definition
             })
         
         random.shuffle(questions)
-        return render_template('quizthree.html', questions=questions)
+        return render_template('quizthree.html', questions=questions, filename=filename)
+    
     except FileNotFoundError:
         return jsonify({"error": "Deck not found"}), 404
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 
 @app.route('/check_matching_answer', methods=['POST'])
 def check_matching_answer():
     data = request.get_json()
+
+    if not data or 'answers' not in data or 'filename' not in data:
+        return jsonify({"error": "Missing data"}), 400
+
     user_answers = data['answers']
     filename = data['filename']
     score = 0
@@ -151,6 +229,7 @@ def check_matching_answer():
             score += 1
 
     return jsonify({"score": score})
+
 
 if __name__ == '__main__':
     app.run(debug=True)

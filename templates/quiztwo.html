@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Level 2 Quiz</title>
+    <style>
+        :root {
+            --dark-purple: #2D2A47;
+            --nav-blue: #464B7D;
+            --light-blue: #6B72B6;
+            --white: #FFFFFF;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--dark-purple);
+            font-family: Arial, sans-serif;
+        }
+
+        nav {
+            background-color: var(--nav-blue);
+            padding: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        nav a {
+            color: var(--white);
+            text-decoration: none;
+            opacity: 0.8;
+            font-size: 1.2rem;
+        }
+
+        .nav-center {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: var(--white);
+        }
+
+        .quiz-container {
+            max-width: 800px;
+            margin: 50px auto;
+            text-align: center;
+        }
+
+        .quiz-header {
+            color: var(--white);
+            margin-bottom: 40px;
+        }
+
+        .quiz-header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .question-box {
+            background-color: var(--light-blue);
+            padding: 40px;
+            border-radius: 15px;
+            margin: 20px;
+        }
+
+        .question-number {
+            background-color: rgba(255, 255, 255, 0.2);
+            padding: 8px 20px;
+            border-radius: 20px;
+            color: var(--white);
+            display: inline-block;
+            margin-bottom: 20px;
+        }
+
+        .question-text {
+            color: var(--white);
+            font-size: 1.5rem;
+            margin-bottom: 30px;
+        }
+
+        .answer-input {
+            width: 80%;
+            padding: 12px 20px;
+            margin: 8px 0;
+            border: none;
+            border-radius: 25px;
+            background-color: rgba(255, 255, 255, 0.9);
+            font-size: 1.1rem;
+        }
+
+        .submit-btn {
+            background-color: var(--nav-blue);
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1.1rem;
+            margin-top: 20px;
+            transition: background-color 0.3s;
+        }
+
+        .submit-btn:hover {
+            background-color: #555d99;
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <a href="#">Home</a>
+        <div class="nav-center">CardsForStudy</div>
+        <a href="#">About</a>
+    </nav>
+
+    <div class="quiz-container">
+        <div class="quiz-header">
+            <h1>LEVEL 2</h1>
+            <h2>QUIZ</h2>
+        </div>
+
+        {% for question in questions %}
+        <div class="question-box" id="question-{{ loop.index }}">
+            <div class="question-number">Question {{ loop.index }}</div>
+            <div class="question-text">
+                The definition of {{ question.term }} is ...
+            </div>
+            <input type="text" class="answer-input" placeholder="Enter your answer...">
+            <button class="submit-btn" onclick="submitAnswer({{ loop.index }}, '{{ question.definition }}')">Submit</button>
+        </div>
+        {% endfor %}
+    </div>
+
+    <script>
+        let score = 0;
+        let currentQuestion = 1;
+        let totalQuestions;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const questionBoxes = document.querySelectorAll('.question-box');
+            totalQuestions = questionBoxes.length;
+
+            questionBoxes.forEach((box, index) => {
+                box.style.display = index === 0 ? 'block' : 'none';
+            });
+        });
+
+        function submitAnswer(questionIndex, correctAnswer) {
+            const userAnswer = document.querySelector(`#question-${questionIndex} .answer-input`).value.trim().toLowerCase();
+            const correctAnswerLower = correctAnswer.toLowerCase();
+
+            if (userAnswer === correctAnswerLower) {
+                score++;
+                alert('Correct! Your score: ' + score);
+                document.getElementById('question-' + questionIndex).style.display = 'none';
+                currentQuestion++;
+                if (currentQuestion <= totalQuestions) {
+                    document.getElementById('question-' + currentQuestion).style.display = 'block';
+                } else {
+                    alert('Quiz completed! Final score: ' + score);
+                }
+            } else {
+                alert('Incorrect. Try again.');
+            }
+        }
+    </script>
+</body>
+</html>
