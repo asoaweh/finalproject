@@ -130,6 +130,7 @@ def quiztwo(filename):
             return redirect(url_for('quiz', filename=filename))
         
         session['current_level'] = 2
+        session['questions_answered'] = 0  # Reset counter for level 2
         
         cards = load_cards_from_csv(filename)
         if not cards:
@@ -142,6 +143,7 @@ def quiztwo(filename):
                 'definition': card.definition
             })
 
+        session['total_questions'] = len(questions)  # Store total number of questions
         return render_template('quiztwo.html', questions=questions, filename=filename)
 
     except FileNotFoundError:
@@ -159,100 +161,170 @@ def submit_answer():
 
     user_answer = data['user_answer']
     term = data['term']
+    filename = data.get('filename')
     
-    cards = load_cards_from_csv(data['filename'])
+    cards = load_cards_from_csv(filename)
     if not cards:
         return jsonify({"error": "Deck not found"}), 404
     
     correct_answer = None
     for card in cards:
-        if card['term'] == term:
-            correct_answer = card['definition']
+        if card.term == term: 
+            correct_answer = card.definition  
             break
     
     if user_answer.strip().lower() == correct_answer.strip().lower():
-        session['score'] += 1
-        session['question_index'] += 1
-        return jsonify({"correct": True, "score": session['score'], "next_question": True})
+        session['score'] = session.get('score', 0) + 1
+        session['questions_answered'] = session.get('questions_answered', 0) + 1
+        
+        # Check if all questions for level 2 are answered
+        if (session.get('current_level') == 2 and 
+            session.get('questions_answered', 0) >= session.get('total_questions', 0)):
+            session['level2_completed'] = True
+            return jsonify({
+                "correct": True, 
+                "score": session['score'], 
+                "next_question": False,
+                "level_completed": True
+            })
+            
+        return jsonify({
+            "correct": True, 
+            "score": session['score'], 
+            "next_question": True,
+            "level_completed": False
+        })
     else:
-        return jsonify({"correct": False, "score": session['score'], "next_question": False})
+        return jsonify({
+            "correct": False, 
+            "score": session['score'], 
+            "next_question": False,
+            "level_completed": False
+        })
 
 
 @app.route('/check_progress', methods=['GET'])
 def check_progress():
-    question_index = session.get('question_index', 0)
-    if question_index >= len(load_cards_from_csv('your_filename.csv')): 
-        return jsonify({"quiz_complete": True, "score": session.get('score', 0)})
-    return jsonify({"quiz_complete": False})
-
-if __name__ == '__main__':
-    app.run(debug=True)
+    if session.get('questions_answered', 0) >= session.get('total_questions', 0):
+        return jsonify({
+            "quiz_complete": True, 
+            "score": session.get('score', 0),
+            "level_completed": session.get('level2_completed', False)
+        })
+    return jsonify({
+        "quiz_complete": False,
+        "level_completed": False
+    })
 
 
 @app.route('/quizthree/<filename>')
 def quizthree(filename):
-    if session.get('current_level', 0) < 3:
-        return redirect(url_for('quiz', filename=filename))
-    
     try:
+        # Check if level 2 was completed
+        if not session.get('level2_completed', False):
+            return redirect(url_for('quiztwo', filename=filename))
+
+        # Load cards
         cards = load_cards_from_csv(filename)
         if not cards:
             return jsonify({"error": "No cards found in the deck"}), 400
+
+        # Prepare the first question
+        first_card = cards[0]
+        other_terms = [card.term for card in cards[1:]]  # Get other terms for options
         
-        questions = []
-        for card in cards:
-            wrong_definitions = [c.definition for c in cards if c.term != card.term]
-            
-            if len(wrong_definitions) >= 3:
-                definitions = random.sample(wrong_definitions, 3)
-                definitions.insert(random.randint(0, 3), card.definition)
-            else:
-                definitions = [card.definition] + wrong_definitions
-                random.shuffle(definitions)
-            
-            questions.append({
-                'term': card.term,
-                'options': definitions,
-                'correct_answer': card.definition
-            })
-        
-        session['current_level'] = 3
-        random.shuffle(questions)
-        return render_template('quizthree.html', questions=questions, filename=filename)
-    
-    except FileNotFoundError:
-        return jsonify({"error": "Deck not found"}), 404
+        # Create options list with 3 random wrong terms plus the correct term
+        options = random.sample(other_terms, min(3, len(other_terms)))
+        options.append(first_card.term)
+        random.shuffle(options)
+
+        # Store remaining cards in session for later use
+        session['remaining_cards'] = [(card.term, card.definition) for card in cards[1:]]
+        session['total_questions'] = len(cards)
+
+        # Create the question object
+        question = {
+            'definition': first_card.definition,
+            'options': options,
+            'correct_term': first_card.term
+        }
+
+        print("Debug - Question:", question)  # Debug print
+
+        return render_template('quizthree.html', 
+                             question=question,  # Changed from current_question to question
+                             question_number=1)  # Changed from current_question_index to question_number
+
     except Exception as e:
+        print(f"Error in quizthree route: {str(e)}")
         return jsonify({"error": str(e)}), 500
-    
+
+@app.route('/get_next_question/<filename>')
+def get_next_question(filename):
+    try:
+        remaining_cards = session.get('remaining_cards', [])
+        total_questions = session.get('total_questions', 0)
+        
+        if not remaining_cards:
+            return jsonify({
+                "completed": True,
+                "total_questions": total_questions
+            })
+
+        # Get next card and update remaining cards
+        next_term, next_definition = remaining_cards[0]
+        session['remaining_cards'] = remaining_cards[1:]
+        
+        # Get all terms from the file for options
+        cards = load_cards_from_csv(filename)
+        other_terms = [card.term for card in cards if card.term != next_term]
+        options = random.sample(other_terms, min(3, len(other_terms)))
+        options.append(next_term)
+        random.shuffle(options)
+        
+        return jsonify({
+            "completed": False,
+            "definition": next_definition,
+            "options": options,
+            "correct_term": next_term
+        })
+        
+    except Exception as e:
+        print(f"Error in get_next_question: {str(e)}")  # Debug print
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/submit_quiz_score', methods=['POST'])
+def submit_quiz_score():
+    data = request.get_json()
+    # Handle score submission here
+    session['level3_completed'] = True
+    return jsonify({"success": True})
+
+
+
 
 @app.route('/check_matching_answer', methods=['POST'])
 def check_matching_answer():
     data = request.get_json()
+    
+    if not data:
+        return jsonify({"error": "No data received"}), 400
+        
+    filename = data.get('filename')
+    final_score = data.get('final_score')
+    total_questions = data.get('total_questions')
+    
+    if None in (filename, final_score, total_questions):
+        return jsonify({"error": "Missing required data"}), 400
 
-    if not data or 'answers' not in data or 'filename' not in data:
-        return jsonify({"error": "Missing data"}), 400
-
-    user_answers = data['answers']
-    filename = data['filename']
-    score = 0
-
-    cards = load_cards_from_csv(filename)
-    if not cards:
-        return jsonify({"error": "Deck not found"}), 404
-
-    for term, user_answer in user_answers.items():
-        correct_answer = None
-        for card in cards:
-            if card.term == term:
-                correct_answer = card.definition
-                break
-
-        if user_answer == correct_answer:
-            score += 1
-
-    return jsonify({"score": score})
-
+    # Update session to mark level 3 as completed
+    session['level3_completed'] = True
+    
+    return jsonify({
+        "score": final_score,
+        "total_questions": total_questions,
+        "message": "Quiz completed successfully"
+    })
 
 if __name__ == '__main__':
     app.run(debug=True)

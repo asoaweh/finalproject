@@ -21,25 +21,38 @@
 
         nav {
             background-color: var(--nav-blue);
-            padding: 1rem;
+            padding: 1rem;  /* Increased padding back to 1rem */
             display: flex;
-            justify-content: space-between;
             align-items: center;
+            width: 100%;
         }
+
+        .nav-links {
+            display: flex;
+            gap: 27px;  /* Increased gap between Home and About */
+            margin-left: 79px;
+            padding-bottom: 0.2rem;  /* Added padding to fine-tune text position */
+        }
+
 
         nav a {
             color: var(--white);
             text-decoration: none;
-            opacity: 0.8;
-            font-size: 1.2rem;
+            opacity: 0.8; 
+            font-family: Arial, Helvetica, sans-serif;
+            font-weight: bold;  /* Changed from bolder to match */
+            font-size: 1.4rem;  /* Adjusted to match Your Decks page */
         }
 
         .nav-center {
-            font-size: 1.8rem;
+            font-size: 1.8rem;  /* Adjusted to match Your Decks page */
             font-weight: bold;
             color: var(--white);
+            position: absolute;
+            left: 52%;
+            transform: translateX(-50%);
+            padding-bottom: 0.2rem;  /* Added padding to align with other text */
         }
-
         .quiz-container {
             max-width: 800px;
             margin: 50px auto;
@@ -107,9 +120,11 @@
 </head>
 <body>
     <nav>
-        <a href="/">Home</a>
+        <div class="nav-links">
+            <a href="/">Home</a>
+            <a href="/about">About</a>
+        </div>
         <div class="nav-center">CardsForStudy</div>
-        <a href="/about">About</a>
     </nav>
 
     <div class="quiz-container">
@@ -134,28 +149,32 @@
         let score = 0;
         let currentQuestion = 1;
         let totalQuestions;
-
+    
         document.addEventListener('DOMContentLoaded', () => {
             const questionBoxes = document.querySelectorAll('.question-box');
             totalQuestions = questionBoxes.length;
-
+    
+            // Hide all questions except the first one
             questionBoxes.forEach((box, index) => {
                 box.style.display = index === 0 ? 'block' : 'none';
             });
         });
-
+    
         function submitAnswer(questionIndex, correctAnswer) {
             const userAnswer = document.querySelector(`#question-${questionIndex} .answer-input`).value.trim().toLowerCase();
             const correctAnswerLower = correctAnswer.toLowerCase();
-
-            fetch('/check_answer', {
+            const currentUrl = window.location.pathname;
+            const filename = currentUrl.split('/').pop();
+    
+            fetch('/submit_answer', {  // Changed from '/check_answer' to '/submit_answer'
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    answer: userAnswer,
-                    correct_answer: correctAnswerLower
+                    user_answer: userAnswer,  // Changed from 'answer' to 'user_answer'
+                    term: document.querySelector(`#question-${questionIndex} .question-text`).textContent.split('of ')[1].split(' is')[0],
+                    filename: filename
                 })
             })
             .then(response => response.json())
@@ -165,13 +184,14 @@
                     alert('Correct! Your score: ' + score);
                     document.getElementById('question-' + questionIndex).style.display = 'none';
                     currentQuestion++;
-                    if (currentQuestion <= totalQuestions) {
-                        document.getElementById('question-' + currentQuestion).style.display = 'block';
-                    } else {
-                        alert('Quiz completed! Final score: ' + score);
-                        const currentUrl = window.location.pathname;
-                        const filename = currentUrl.split('/').pop();
+                    
+                    if (data.level_completed) {
+                        // Level is complete, proceed to quiz three
+                        alert('Level 2 completed! Moving to Level 3...');
                         window.location.href = `/quizthree/${filename}`;
+                    } else if (currentQuestion <= totalQuestions) {
+                        // Show next question if there are more questions
+                        document.getElementById('question-' + currentQuestion).style.display = 'block';
                     }
                 } else {
                     alert('Incorrect. Try again.');

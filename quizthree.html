@@ -23,21 +23,32 @@
             background-color: var(--nav-blue);
             padding: 1rem;
             display: flex;
-            justify-content: space-between;
             align-items: center;
+            width: 100%;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 27px;
+            margin-left: 79px;
         }
 
         nav a {
             color: var(--white);
             text-decoration: none;
             opacity: 0.8;
-            font-size: 1.2rem;
+            font-family: Arial, sans-serif;
+            font-weight: bold;
+            font-size: 1.4rem;
         }
 
         .nav-center {
             font-size: 1.8rem;
             font-weight: bold;
             color: var(--white);
+            position: absolute;
+            left: 52%;
+            transform: translateX(-50%);
         }
 
         .quiz-container {
@@ -114,33 +125,15 @@
             color: white;
             transform: scale(1.05);
         }
-
-        @media (max-width: 768px) {
-            .answer-buttons {
-                grid-template-columns: 1fr;
-                padding: 10px;
-            }
-
-            .question-box {
-                margin: 10px;
-                padding: 20px;
-            }
-
-            .quiz-header h1 {
-                font-size: 2rem;
-            }
-
-            .quiz-header h2 {
-                font-size: 1.5rem;
-            }
-        }
     </style>
 </head>
 <body>
     <nav>
-        <a href="/">Home</a>
+        <div class="nav-links">
+            <a href="/">Home</a>
+            <a href="/about">About</a>
+        </div>
         <div class="nav-center">CardsForStudy</div>
-        <a href="/about">About</a>
     </nav>
 
     <div class="quiz-container">
@@ -149,59 +142,96 @@
             <h2>QUIZ</h2>
         </div>
 
-        {% for question in questions %}
-        <div class="question-box" id="question-{{ loop.index }}">
-            <div class="question-number">Question {{ loop.index }}</div>
+        <div class="question-box">
+            <div class="question-number">Question {{ question_number }}</div>
             <div class="question-text">
-                Match a definition "{{ question.definition }}" to a correct term:
+                Match the definition "{{ question.definition }}" to a correct term:
             </div>
             <div class="answer-buttons">
-                <button class="term-btn" onclick="submitAnswer({{ loop.index }}, '{{ question.options[0] }}', '{{ question.correct_term }}')">
-                    {{ question.options[0] }}
-                </button>
-                <button class="term-btn" onclick="submitAnswer({{ loop.index }}, '{{ question.options[1] }}', '{{ question.correct_term }}')">
-                    {{ question.options[1] }}
-                </button>
-                <button class="term-btn" onclick="submitAnswer({{ loop.index }}, '{{ question.options[2] }}', '{{ question.correct_term }}')">
-                    {{ question.options[2] }}
-                </button>
-                <button class="term-btn" onclick="submitAnswer({{ loop.index }}, '{{ question.options[3] }}', '{{ question.correct_term }}')">
-                    {{ question.options[3] }}
-                </button>
+                {% for option in question.options %}
+                    <button class="term-btn" onclick="submitAnswer('{{ option }}', '{{ question.correct_term }}')">
+                        {{ option }}
+                    </button>
+                {% endfor %}
             </div>
         </div>
-        {% endfor %}
-    </div>
 
-    <script>
-        let score = 0;
-        let currentQuestion = 1;
-        let totalQuestions;
-
-        document.addEventListener('DOMContentLoaded', () => {
-            const questionBoxes = document.querySelectorAll('.question-box');
-            totalQuestions = questionBoxes.length;
-
-            questionBoxes.forEach((box, index) => {
-                box.style.display = index === 0 ? 'block' : 'none';
-            });
-        });
-
-        function submitAnswer(questionIndex, selectedTerm, correctTerm) {
-            if (selectedTerm === correctTerm) {
-                score++;
-                alert('Correct! Your score: ' + score);
-                document.getElementById('question-' + questionIndex).style.display = 'none';
-                currentQuestion++;
-                if (currentQuestion <= totalQuestions) {
-                    document.getElementById('question-' + currentQuestion).style.display = 'block';
+        <script>
+            let score = 0;
+            let currentQuestionIndex = 1;
+            let answeredQuestions = new Set();
+        
+            function submitAnswer(selectedTerm, correctTerm) {
+                const currentUrl = window.location.pathname;
+                const filename = currentUrl.split('/').pop();
+        
+                if (selectedTerm === correctTerm) {
+                    score++;
+                    alert('Correct! Your score: ' + score);
+        
+                    // Fetch next question
+                    fetch(`/get_next_question/${filename}`)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Network response was not ok');
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        if (data.completed) {
+                            alert('Congratulations! Quiz completed!\nFinal score: ' + score + ' out of ' + data.total_questions);
+                            
+                            return fetch('/check_matching_answer', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                },
+                                body: JSON.stringify({
+                                    filename: filename,
+                                    final_score: score,
+                                    total_questions: data.total_questions
+                                })
+                            });
+                        } else {
+                            currentQuestionIndex++;
+                            updateQuestionDisplay(data);
+                        }
+                    })
+                    .then(response => {
+                        if (response) {
+                            return response.json();
+                        }
+                    })
+                    .then(data => {
+                        if (data) {
+                            window.location.href = '/';
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('An error occurred. Please try again.');
+                    });
                 } else {
-                    alert('Quiz completed! Final score: ' + score);
+                    alert('Incorrect. Try again.');
                 }
-            } else {
-                alert('Incorrect. Try again.');
             }
-        }
-    </script>
+        
+            function updateQuestionDisplay(questionData) {
+                document.querySelector('.question-number').textContent = `Question ${currentQuestionIndex}`;
+                document.querySelector('.question-text').textContent = 
+                    `Match the definition "${questionData.definition}" to a correct term:`;
+                
+                const buttonsContainer = document.querySelector('.answer-buttons');
+                buttonsContainer.innerHTML = '';
+                
+                questionData.options.forEach(term => {
+                    const button = document.createElement('button');
+                    button.className = 'term-btn';
+                    button.textContent = term;
+                    button.onclick = () => submitAnswer(term, questionData.correct_term);
+                    buttonsContainer.appendChild(button);
+                });
+            }
+        </script>
 </body>
 </html>
